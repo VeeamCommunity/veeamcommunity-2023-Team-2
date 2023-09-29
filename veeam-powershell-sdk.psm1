@@ -30,7 +30,7 @@ function New-VBRConnection {
 
     )
     
-    $apiUrl = "https://'$Endpoint':'$Port'/api/oauth2/token"
+    $apiUrl = "https://$($Endpoint):$($Port)/api/oauth2/token"
 
 
 
@@ -52,13 +52,14 @@ function New-VBRConnection {
         $response = Invoke-RestMethod -Uri $apiUrl -Headers $headers -Method Post -Body $body -SkipCertificateCheck 
         
         if (($response.access_token) -or ($response.StatusCode -eq 200) ) {
-            $VBRAuthentication = @{
-                $session_endpoint       = $Endpoint
-                $session_port           = $Port
-                $session_access_tocken  = $response.access_token
-            }
             Write-Host "Successfully authenticated."
-            return $VBRAuthentication 
+            $VBRAuthentication = [PSCustomObject]@{
+                Session_endpoint       = $Endpoint
+                Session_port           = $Port
+                Session_access_token  = $response.access_token
+            }
+        
+            return $VBRAuthentication
         }
         else {
             Write-Host "Authentication failed. Status code: $($response.StatusCode), Message: $($response.Content)"
@@ -69,22 +70,102 @@ function New-VBRConnection {
     }
 }
 
-function Get-BackupJobs {
+function Get-Jobs {
+    <#
+    .SYNOPSIS
+        Uses Get-BackupJobs to retrive the backup jobs coordinated by the backup server/ 
+    .DESCRIPTION
+        This allows you to get an array of all jobs coordinated by the backup server.
+    .OUTPUTS
+        Returns the all jobs.
+    .EXAMPLE
+        
+
+    #>
+    
     [CmdletBinding()]
     Param(
         [Parameter(Position=0,mandatory=$true)]
-        [VeeamServer.Authentication]$VBRAuthentication
+        [PSCustomObject]$VBRConnection,
+
+        [Parameter(Position=0,mandatory=$false)]
+        [String]$JobID
     )
 
-    VBRAuthentication
-    $apiUrl = "https://'$($VBRAuthentication.$session_endpoint)':'$($VBRAuthentication.$session_post)'/v1/jobs?skip=0&limit=0&orderColumn=Name&orderAsc=true&nameFilter=string&typeFilter=Backup"
-    
+     
+    if ($JobID -eq $null){
+        $apiUrl = "https://$($VBRConnection.Session_endpoint):$($VBRConnection.Session_post)/v1/jobs"
+    } else {
+        $apiUrl = "https://$($VBRConnection.Session_endpoint):$($VBRConnection.Session_post)/v1/jobs/" + $JobID
+    }
+
     # Define the headers for the API request
     $headers = @{
         "x-api-version" = "1.1-rev0"
-        "Authorization" = "Bearer '$($VBRAccessToken.$session_access_tocken)'"
+        "Authorization" = "Bearer $($VBRConnection.Session_access_token)"
     }
 
-
-    Invoke-RestMethod -Uri $apiUrl -Headers $headers -Method GET -SkipCertificateCheck
+    # Send a request to get a list of backup jobs
+    try {
+        $response = Invoke-RestMethod -Uri $apiUrl -Headers $headers -Method GET -SkipCertificateCheck
+        
+        # Process the response data as needed
+        return $response.data
+    }
+    catch {
+        Write-Host "An error occurred: $($_.Exception.Message)"
+        return $null
+    }
 }
+
+
+function Get-Backups {
+    <#
+    .SYNOPSIS
+        Uses Get-Backups to retrive the backup  by the backup server.
+    .DESCRIPTION
+        This allows you to get a list of all the backups coordinated by the backup server.
+    .OUTPUTS
+        Returns the all backups.
+    .EXAMPLE
+        
+
+    #>
+    
+    [CmdletBinding()]
+    Param(
+        [Parameter(Position=0,mandatory=$true)]
+        [PSCustomObject]$VBRConnection,
+
+        [Parameter(Position=0,mandatory=$false)]
+        [String]$BackupID
+    )
+
+     
+    if ($BackupID -eq $null){
+        $apiUrl = "https://$($VBRConnection.Session_endpoint):$($VBRConnection.Session_post)/v1/backups"
+    } else {
+        $apiUrl = "https://$($VBRConnection.Session_endpoint):$($VBRConnection.Session_post)/v1/backups/" + $BackupID
+    }
+
+    # Define the headers for the API request
+    $headers = @{
+        "x-api-version" = "1.1-rev0"
+        "Authorization" = "Bearer $($VBRConnection.Session_access_token)"
+    }
+
+    # Send a request to get a list of backup jobs
+    try {
+        $response = Invoke-RestMethod -Uri $apiUrl -Headers $headers -Method GET -SkipCertificateCheck
+        
+        # Process the response data as needed
+        return $response.data
+    }
+    catch {
+        Write-Host "An error occurred: $($_.Exception.Message)"
+        return $null
+    }
+}
+
+
+

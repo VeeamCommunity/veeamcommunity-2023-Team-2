@@ -67,8 +67,8 @@ Properties {
     # The name of your module should match the basename of the PSD1 file.
     #$ModuleName = (Get-Item .\Veeam.PowerShell.SDK\*.psd1 |
     #               Foreach-Object {$null = Test-ModuleManifest -Path $_ -ErrorAction SilentlyContinue; if ($?) {$_}})[0].BaseName
-    $ModuleName = Get-Item .\Veeam.PowerShell.SDK\*.psd1 | Test-ModuleManifest
-    
+    $ModuleName = Get-Item *.psd1 | Test-ModuleManifest
+
     # Path to the release notes file.  Set to $null if the release notes reside in the manifest file.
     [System.Diagnostics.CodeAnalysis.SuppressMessage('PSUseDeclaredVarsMoreThanAssigments', '')]
     $ReleaseNotesPath = "$PSScriptRoot\ReleaseNotes.md"
@@ -134,7 +134,9 @@ Task PostPublish {
 ###############################################################################
 Task default -depends Build
 
-Task Publish -depends Test, BuildHelp, PrePublish, PublishImpl, PostPublish {
+#Task Publish -depends Test, BuildHelp, PrePublish, PublishImpl, PostPublish {
+#}
+Task Publish -depends Test, PrePublish, PublishImpl, PostPublish {
 }
 
 Task PublishImpl -depends Test -requiredVariables EncryptedApiKeyPath, PublishDir {

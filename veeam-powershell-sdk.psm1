@@ -9,7 +9,7 @@ function New-VBRConnection {
     .OUTPUTS
         Returns the Veeam Server connection.
     .EXAMPLE
-        
+    New-VBRConnection -Endpoint <FQDN or IP> -Port <default 9419> -User <Administrator> -Pass <Password>    
 
     #>
 
@@ -166,6 +166,55 @@ function Get-Backups {
         return $null
     }
 }
+
+function Get-Repositories {
+    <#
+    .SYNOPSIS
+        Uses Get-Repositories to retrive the backup by the backup server.
+    .DESCRIPTION
+        This allows you to get a list of all the backups coordinated by the backup server.
+    .OUTPUTS
+        Returns the all backups.
+    .EXAMPLE
+        
+
+    #>
+    
+    [CmdletBinding()]
+    Param(
+        [Parameter(Position=0,mandatory=$true)]
+        [PSCustomObject]$VBRConnection,
+
+        [Parameter(Position=0,mandatory=$false)]
+        [String]$RepositoryID
+    )
+
+     
+    if ($RepositoryID -eq $null){
+        $apiUrl = "https://$($VBRConnection.Session_endpoint):$($VBRConnection.Session_post)/api/v1/backupInfrastructure/repositories"
+    } else {
+        $apiUrl = "https://$($VBRConnection.Session_endpoint):$($VBRConnection.Session_post)/api/v1/backupInfrastructure/repositories/" + $RepositoryID
+    }
+
+    # Define the headers for the API request
+    $headers = @{
+        "x-api-version" = "1.1-rev0"
+        "Authorization" = "Bearer $($VBRConnection.Session_access_token)"
+    }
+
+    # Send a request to get a list of backup jobs
+    try {
+        $response = Invoke-RestMethod -Uri $apiUrl -Headers $headers -Method GET -SkipCertificateCheck
+        
+        # Process the response data as needed
+        return $response.data
+    }
+    catch {
+        Write-Host "An error occurred: $($_.Exception.Message)"
+        return $null
+    }
+}
+
 
 
 

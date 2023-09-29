@@ -88,7 +88,7 @@ function Get-Jobs {
         [Parameter(Position=0,mandatory=$true)]
         [PSCustomObject]$VBRConnection,
 
-        [Parameter(Position=0,mandatory=$false)]
+        [Parameter(Position=1,mandatory=$false)]
         [String]$JobID
     )
 
@@ -137,7 +137,7 @@ function Get-Backups {
         [Parameter(Position=0,mandatory=$true)]
         [PSCustomObject]$VBRConnection,
 
-        [Parameter(Position=0,mandatory=$false)]
+        [Parameter(Position=1,mandatory=$false)]
         [String]$BackupID
     )
 
@@ -185,7 +185,7 @@ function Get-Repositories {
         [Parameter(Position=0,mandatory=$true)]
         [PSCustomObject]$VBRConnection,
 
-        [Parameter(Position=0,mandatory=$false)]
+        [Parameter(Position=1,mandatory=$false)]
         [String]$RepositoryID
     )
 
@@ -215,6 +215,50 @@ function Get-Repositories {
     }
 }
 
+
+function Add-RepositoryAzureBlob {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Position=0,mandatory=$true)]
+        [PSCustomObject]$VBRConnection,
+
+        [Parameter(Position=1,mandatory=$true)]
+        [String]$Name,
+
+        [Parameter(Position=2,mandatory=$true)]
+        [String]$Desciption,
+
+        [Parameter(Position=1,mandatory=$true)]
+        [PSCustomObject]$AzureAccount
+    )
+    
+    $apiUrl = "https://$($VBRConnection.Session_endpoint):$($VBRConnection.Session_post)/api/v1/backupInfrastructure/repositories"
+
+    # Define the headers for the API request
+    $headers = @{
+        "x-api-version" = "1.1-rev0"
+        "Authorization" = "Bearer $($VBRConnection.Session_access_token)"
+    }
+
+     # Define the body for the API request
+    $body = @{
+        "kind"      = "AzureBlob"
+    } 
+    
+    # Send a request to get a list of backup jobs
+    try {
+        $response = Invoke-RestMethod -Uri $apiUrl -Headers $headers -Body $body -Method POST -SkipCertificateCheck
+        
+        # Process the response data as needed
+        return $response.data
+    }
+    catch {
+        Write-Host "An error occurred: $($_.Exception.Message)"
+        return $null
+    }
+
+
+}
 
 
 

@@ -33,7 +33,7 @@ Copyright = '(c) Adam Mazouz. All rights reserved.'
 Description = 'This is a poc created for Veeam Community Hackathon'
 
 # Minimum version of the PowerShell engine required by this module
-PowerShellVersion = '7.x'
+#PowerShellVersion = '7.0'
 
 # Name of the PowerShell host required by this module
 # PowerShellHostName = ''

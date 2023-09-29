@@ -9,7 +9,7 @@ function New-VBRConnection {
     .OUTPUTS
         Returns the Veeam Server connection.
     .EXAMPLE
-    New-VBRConnection -Endpoint <FQDN or IP> -Port <default 9419> -User <Administrator> -Pass <Password>    
+    New-VBRConnection -Endpoint <FQDN or IP> -Port <default 9419> -Credential $(Get-Credential)  
 
     #>
 
@@ -22,17 +22,16 @@ function New-VBRConnection {
         [Parameter(Position=1,mandatory=$true)]
         [string]$Port, 
 
-        [Parameter(Position=2,mandatory=$true)]
-        [string]$User, 
-
-        [Parameter(Position=3,mandatory=$true)]
-        [string]$Pass 
+        [Parameter(Mandatory=$true,ParameterSetName="Credential")]
+        [ValidateNotNullOrEmpty()]
+        [Management.Automation.PSCredential]$Credential
 
     )
     
     $apiUrl = "https://$($Endpoint):$($Port)/api/oauth2/token"
 
-
+    $User = $Credential.UserName
+    $Pass = $Credential.GetNetworkCredential().Password
 
     # Define the headers for the API request
     $headers = @{
